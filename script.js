@@ -1,5 +1,4 @@
-
-// Step 1: Gameboard Module
+// Gameboard Module
 const Gameboard = (() => {
     let board = Array(9).fill("");
   
@@ -32,102 +31,107 @@ const Gameboard = (() => {
     return { getBoard, updateCell, resetBoard, printBoard };
   })();
   
-//   Step 2: Player Factory
-
-const Player = (name, marker) => {
+  // Player Factory
+  const Player = (name, marker) => {
     return { name, marker };
   };
-
-// Game Controller
-
-const GameController = (() => {
+  
+  // Game Controller
+  const GameController = (() => {
     const player1 = Player("Player 1", "X");
     const player2 = Player("Player 2", "O");
     let currentPlayer = player1;
     let gameOver = false;
-
-    const winningCombos = [
-        [0,1,2],[3,4,5],[6,7,8], // rows
-        [0,3,6],[1,4,7],[2,5,8], // columns
-        [0,4,8],[2,4,6]          // diagonals
-    ];
-
+  
     const playRound = (index) => {
-        if (gameOver) {
-            console.log("Game is already over.");
-            return; 
-        }
-
-        const success = Gameboard.updateCell(index, currentPlayer.marker)
-
-        if (!success) {
-            console.log("Invalid move. Cell is taken.");
-            return;       
-        }
-
-        Gameboard.printBoard();
-
-        if (checkWinner(currentPlayer.marker)) {
-            console.log(`${currentPlayer.name} wins!`);
-            gameOver = true;
-            return;
-          }
-
-          if (Gameboard.getBoard().every(cell => cell !== "")) {
-            console.log("It's a tie!");
-            gameOver = true;
-            return;
-          }
-          switchPlayer();
-        console.log(`Next turn: ${currentPlayer.name}`);
+      if (gameOver) return;
+  
+      const success = Gameboard.updateCell(index, currentPlayer.marker);
+      if (!success) return;
+  
+      if (checkWinner(currentPlayer.marker)) {
+        DisplayController.showMessage(`${currentPlayer.name} wins!`);
+        gameOver = true;
+        DisplayController.render();
+        return;
+      }
+  
+      if (Gameboard.getBoard().every(cell => cell !== "")) {
+        DisplayController.showMessage("It's a draw!");
+        gameOver = true;
+        DisplayController.render();
+        return;
+      }
+  
+      switchPlayer();
+      DisplayController.showMessage(`Turn: ${currentPlayer.name}`);
+      DisplayController.render();
     };
+  
+    const switchPlayer = () => {
+      currentPlayer = currentPlayer === player1 ? player2 : player1;
+    };
+  
     const checkWinner = (marker) => {
-        const board = Gameboard.getBoard();
-        return winningCombos.some(combo =>
-          combo.every(index => board[index] === marker)
-        );
-      };
-
-      const switchPlayer = () => {
-        currentPlayer = (currentPlayer === player1) ? player2 : player1;
-      };
-      const restart = () => {
-        Gameboard.resetBoard();
-        currentPlayer = player1;
-        gameOver = false;
-        console.log("Game restarted.");
-        Gameboard.printBoard();
-      };
-
-      return { playRound, restart };
-})();
-
-
-const DisplayController = (() => {
+      const b = Gameboard.getBoard();
+      const wins = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6],
+      ];
+      return wins.some(combo => combo.every(i => b[i] === marker));
+    };
+  
+    const restart = () => {
+      Gameboard.resetBoard();
+      currentPlayer = player1;
+      gameOver = false;
+      DisplayController.showMessage("Tic Tac Toe");
+      DisplayController.render();
+    };
+  
+    const isGameOver = () => gameOver;
+    const getCurrentPlayer = () => currentPlayer;
+  
+    return { playRound, restart, isGameOver, getCurrentPlayer };
+  })();
+  
+  // Display Controller
+  const DisplayController = (() => {
     const boardElement = document.getElementById("board");
     const messageElement = document.getElementById("message");
   
     const render = () => {
-      boardElement.innerHTML = ""; // Clear old board
-  
+      if (!boardElement) return;
+      boardElement.innerHTML = "";
       Gameboard.getBoard().forEach((cell, index) => {
         const cellDiv = document.createElement("div");
         cellDiv.classList.add("cell");
         cellDiv.textContent = cell;
-  
+        cellDiv.style.cursor = GameController.isGameOver() || cell ? "default" : "pointer";
         cellDiv.addEventListener("click", () => {
+          if (GameController.isGameOver() || cell) return;
           GameController.playRound(index);
-          render(); // Update UI after move
         });
-  
         boardElement.appendChild(cellDiv);
       });
     };
   
     const showMessage = (msg) => {
-      messageElement.textContent = msg;
+      if (messageElement) messageElement.textContent = msg;
     };
   
     return { render, showMessage };
   })();
+  
+  // Initial render and restart button setup
+  document.addEventListener("DOMContentLoaded", () => {
+    DisplayController.render();
+    const restartBtn = document.getElementById("restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        GameController.restart();
+      });
+    }
+  });
   

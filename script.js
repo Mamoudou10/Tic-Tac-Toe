@@ -101,3 +101,33 @@ const GameController = (() => {
 
       return { playRound, restart };
 })();
+
+
+const DisplayController = (() => {
+    const boardElement = document.getElementById("board");
+    const messageElement = document.getElementById("message");
+  
+    const render = () => {
+      boardElement.innerHTML = ""; // Clear old board
+  
+      Gameboard.getBoard().forEach((cell, index) => {
+        const cellDiv = document.createElement("div");
+        cellDiv.classList.add("cell");
+        cellDiv.textContent = cell;
+  
+        cellDiv.addEventListener("click", () => {
+          GameController.playRound(index);
+          render(); // Update UI after move
+        });
+  
+        boardElement.appendChild(cellDiv);
+      });
+    };
+  
+    const showMessage = (msg) => {
+      messageElement.textContent = msg;
+    };
+  
+    return { render, showMessage };
+  })();
+  

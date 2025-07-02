@@ -78,3 +78,31 @@ button#restart-btn:hover {
   background: linear-gradient(90deg, #6b9ac4 0%, #4a6fa5 100%);
   transform: translateY(-2px) scale(1.04);
 }
+
+.win {
+  background: linear-gradient(135deg, #fffbe6 0%, #ffe082 100%) !important;
+  border-color: #ffd600 !important;
+  animation: win-flash 0.7s cubic-bezier(.4,2,.6,.9) 0s 3 alternate;
+  box-shadow: 0 0 16px 4px #ffe082;
+  color: #ffab00 !important;
+}
+
+@keyframes win-flash {
+  0% { background: #fffbe6; }
+  50% { background: #ffe082; box-shadow: 0 0 32px 8px #ffe082; }
+  100% { background: #fffbe6; }
+}
+
+.win-message {
+  animation: pop-glow 1s cubic-bezier(.4,2,.6,.9);
+  color: #ffab00 !important;
+  text-shadow: 0 0 12px #ffe082, 0 2px 2px #fffbe6;
+}
+
+@keyframes pop-glow {
+  0% { transform: scale(1); opacity: 0.7; }
+  40% { transform: scale(1.2); opacity: 1; }
+  60% { transform: scale(0.95); }
+  80% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}

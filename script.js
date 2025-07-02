@@ -42,6 +42,7 @@ const Gameboard = (() => {
     const player2 = Player("Player 2", "O");
     let currentPlayer = player1;
     let gameOver = false;
+    let winCombo = [];
   
     const playRound = (index) => {
       if (gameOver) return;
@@ -49,15 +50,17 @@ const Gameboard = (() => {
       const success = Gameboard.updateCell(index, currentPlayer.marker);
       if (!success) return;
   
-      if (checkWinner(currentPlayer.marker)) {
-        DisplayController.showMessage(`${currentPlayer.name} wins!`);
+      const winnerCombo = checkWinner(currentPlayer.marker);
+      if (winnerCombo) {
+        winCombo = winnerCombo;
+        DisplayController.showMessage(`${currentPlayer.name} wins!`, true);
         gameOver = true;
-        DisplayController.render();
+        DisplayController.render(winCombo);
         return;
       }
   
       if (Gameboard.getBoard().every(cell => cell !== "")) {
-        DisplayController.showMessage("It's a draw!");
+        DisplayController.showMessage("It's a draw!", false);
         gameOver = true;
         DisplayController.render();
         return;
@@ -79,21 +82,28 @@ const Gameboard = (() => {
         [0, 3, 6], [1, 4, 7], [2, 5, 8],
         [0, 4, 8], [2, 4, 6],
       ];
-      return wins.some(combo => combo.every(i => b[i] === marker));
+      for (let combo of wins) {
+        if (combo.every(i => b[i] === marker)) {
+          return combo;
+        }
+      }
+      return false;
     };
   
     const restart = () => {
       Gameboard.resetBoard();
       currentPlayer = player1;
       gameOver = false;
+      winCombo = [];
       DisplayController.showMessage("Tic Tac Toe");
       DisplayController.render();
     };
   
     const isGameOver = () => gameOver;
     const getCurrentPlayer = () => currentPlayer;
+    const getWinCombo = () => winCombo;
   
-    return { playRound, restart, isGameOver, getCurrentPlayer };
+    return { playRound, restart, isGameOver, getCurrentPlayer, getWinCombo };
   })();
   
   // Display Controller
@@ -101,14 +111,18 @@ const Gameboard = (() => {
     const boardElement = document.getElementById("board");
     const messageElement = document.getElementById("message");
   
-    const render = () => {
+    const render = (winCombo = []) => {
       if (!boardElement) return;
       boardElement.innerHTML = "";
+      const comboSet = new Set(winCombo);
       Gameboard.getBoard().forEach((cell, index) => {
         const cellDiv = document.createElement("div");
         cellDiv.classList.add("cell");
         cellDiv.textContent = cell;
         cellDiv.style.cursor = GameController.isGameOver() || cell ? "default" : "pointer";
+        if (comboSet.has(index)) {
+          cellDiv.classList.add("win");
+        }
         cellDiv.addEventListener("click", () => {
           if (GameController.isGameOver() || cell) return;
           GameController.playRound(index);
@@ -117,8 +131,15 @@ const Gameboard = (() => {
       });
     };
   
-    const showMessage = (msg) => {
-      if (messageElement) messageElement.textContent = msg;
+    const showMessage = (msg, isWin = false) => {
+      if (messageElement) {
+        messageElement.textContent = msg;
+        messageElement.classList.remove("win-message");
+        if (isWin) {
+          void messageElement.offsetWidth;
+          messageElement.classList.add("win-message");
+        }
+      }
     };
   
     return { render, showMessage };

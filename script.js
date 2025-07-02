@@ -38,11 +38,17 @@ const Gameboard = (() => {
   
   // Game Controller
   const GameController = (() => {
-    const player1 = Player("Player 1", "X");
-    const player2 = Player("Player 2", "O");
+    let player1 = Player("Joueur 1", "X");
+    let player2 = Player("Joueur 2", "O");
     let currentPlayer = player1;
     let gameOver = false;
     let winCombo = [];
+  
+    const setPlayerNames = (name1, name2) => {
+      player1 = Player(name1 || "Joueur 1", "X");
+      player2 = Player(name2 || "Joueur 2", "O");
+      currentPlayer = player1;
+    };
   
     const playRound = (index) => {
       if (gameOver) return;
@@ -53,21 +59,21 @@ const Gameboard = (() => {
       const winnerCombo = checkWinner(currentPlayer.marker);
       if (winnerCombo) {
         winCombo = winnerCombo;
-        DisplayController.showMessage(`${currentPlayer.name} wins!`, true);
+        DisplayController.showMessage(`${currentPlayer.name} a gagné !`, true);
         gameOver = true;
         DisplayController.render(winCombo);
         return;
       }
   
       if (Gameboard.getBoard().every(cell => cell !== "")) {
-        DisplayController.showMessage("It's a draw!", false);
+        DisplayController.showMessage("Match nul !", false);
         gameOver = true;
         DisplayController.render();
         return;
       }
   
       switchPlayer();
-      DisplayController.showMessage(`Turn: ${currentPlayer.name}`);
+      DisplayController.showMessage(`Au tour de : ${currentPlayer.name}`);
       DisplayController.render();
     };
   
@@ -95,15 +101,16 @@ const Gameboard = (() => {
       currentPlayer = player1;
       gameOver = false;
       winCombo = [];
-      DisplayController.showMessage("Tic Tac Toe");
+      DisplayController.showMessage("Morpion");
       DisplayController.render();
     };
   
     const isGameOver = () => gameOver;
     const getCurrentPlayer = () => currentPlayer;
     const getWinCombo = () => winCombo;
+    const getPlayers = () => [player1, player2];
   
-    return { playRound, restart, isGameOver, getCurrentPlayer, getWinCombo };
+    return { playRound, restart, isGameOver, getCurrentPlayer, getWinCombo, setPlayerNames, getPlayers };
   })();
   
   // Display Controller
@@ -147,11 +154,38 @@ const Gameboard = (() => {
   
   // Initial render and restart button setup
   document.addEventListener("DOMContentLoaded", () => {
-    DisplayController.render();
+    // Modal gestion
+    const modal = document.getElementById("player-modal");
+    const form = document.getElementById("player-form");
+    const input1 = document.getElementById("player1-name");
+    const input2 = document.getElementById("player2-name");
+  
+    if (modal && form && input1 && input2) {
+      // Vider les champs à chaque affichage du modal
+      input1.value = "";
+      input2.value = "";
+      modal.style.display = "flex";
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name1 = input1.value.trim() || "Joueur 1";
+        const name2 = input2.value.trim() || "Joueur 2";
+        GameController.setPlayerNames(name1, name2);
+        modal.style.display = "none";
+        DisplayController.showMessage(`Au tour de : ${name1}`);
+        DisplayController.render();
+      });
+    } else {
+      // fallback si modal absent
+      DisplayController.render();
+    }
+  
     const restartBtn = document.getElementById("restart-btn");
     if (restartBtn) {
       restartBtn.addEventListener("click", () => {
         GameController.restart();
+        // Afficher le nom du joueur courant après restart
+        const [p1, ] = GameController.getPlayers();
+        DisplayController.showMessage(`Au tour de : ${p1.name}`);
       });
     }
   });
